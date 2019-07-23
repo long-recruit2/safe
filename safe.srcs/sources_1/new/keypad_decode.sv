@@ -9,24 +9,16 @@ module keypad_decode #(
     input wire [3:0] row,
     (* fsm_encoding = "none" *) output logic [3:0] col = 'b0111,
     output logic [3:0] led = 0,
-    output logic led6_b
+    output logic all_not_pressed
 );
     localparam int CLK_DIV_COUNT = CLK_FREQ * POLL_PERIOD;
     logic [$clog2(CLK_DIV_COUNT)-1:0] counter = 0;
     
-    // worked fine
-    // assign led6_b = 'b1;
-    
-    // logic tmp = 'b0;
-    // always_ff @(posedge sysclk)
-    //     tmp <= 'b1;
-    // assign led6_b = tmp;
+    logic [3:0] notpressed = 'h00;
 
-    logic tmp = 'b0;
-    logic tmp2 = 'b0;
-    logic tmp3 = 'b0;
-    logic tmp4 = 'b0;
-    assign led6_b = tmp & tmp2 & tmp3 & tmp4;    
+    // better technique?
+    assign all_not_pressed =
+        notpressed[0] & notpressed[1] & notpressed[2] & notpressed[3];    
 
     always_ff @(posedge sysclk)
         if (counter == CLK_DIV_COUNT - 1)
@@ -46,86 +38,46 @@ module keypad_decode #(
     always_ff @(posedge sysclk)
         if (counter == CLK_DIV_COUNT/2 - 1)    
             unique case (col)
-            'b0111:
+            'b0111: begin
+                notpressed[0] <= 'b0;
                 unique case(row)
-                'b0111: begin
-                    led <= 'h1;
-                    tmp <= 'b0;
-                end
-                'b1011: begin
-                    led <= 'h4;
-                    tmp <= 'b0;
-                end
-                'b1101: begin
-                    led <= 'h7;
-                    tmp <= 'b0;
-                end
-                'b1110: begin
-                    led <= 'h0;
-                    tmp <= 'b0;
-                end
-                default: tmp <= 'b1;
+                'b0111: led <= 'h1;
+                'b1011: led <= 'h4;
+                'b1101: led <= 'h7;
+                'b1110: led <= 'h0;
+                default: notpressed[0] <= 'b1;
                 endcase
-            'b1011:
+            end
+            'b1011: begin
+                notpressed[1] <= 'b0;
                 unique case(row)
-                'b0111: begin
-                    led <= 'h2;
-                    tmp2 <= 'b0;
-                end
-                'b1011: begin
-                    led <= 'h5;
-                    tmp2 <= 'b0;
-                end
-                'b1101: begin
-                    led <= 'h8;
-                    tmp2 <= 'b0;
-                end
-                'b1110: begin
-                    led <= 'hF;
-                    tmp2 <= 'b0;
-                end
-                default: tmp2 <= 'b1;
+                'b0111: led <= 'h2;
+                'b1011: led <= 'h5;
+                'b1101: led <= 'h8;
+                'b1110: led <= 'hF;
+                default: notpressed[1] <= 'b1;
                 endcase
-            'b1101:
+            end
+            'b1101: begin
+                notpressed[2] <= 'b0;
                 unique case(row)
-                'b0111: begin 
-                    led <= 'h3;
-                    tmp3 <= 'b0;
-                end
-                'b1011: begin 
-                    led <= 'h6;
-                    tmp3 <= 'b0;
-                 end
-                'b1101: begin 
-                    led <= 'h9; 
-                    tmp3 <= 'b0;
-                end
-                'b1110: begin 
-                    led <= 'hE;
-                    tmp3 <= 'b0;
-                end
-                default: tmp3 <= 'b1 ;
+                'b0111: led <= 'h3;
+                'b1011: led <= 'h6;
+                'b1101: led <= 'h9;
+                'b1110: led <= 'hE;
+                default: notpressed[2] <= 'b1;
                 endcase
-            'b1110:
+            end
+            'b1110: begin
+                notpressed[3] <= 'b0;
                 unique case(row)
-                'b0111: begin 
-                    led <= 'hA; 
-                    tmp4 <= 'b0;
-                end
-                'b1011: begin 
-                    led <= 'hB; 
-                    tmp4 <= 'b0;
-                end
-                'b1101: begin 
-                    led <= 'hC;
-                    tmp4 <= 'b0;
-                end
-                'b1110: begin
-                    led <= 'hD;
-                    tmp4 <= 'b0;
-                end
-                default: tmp4 <= 'b1 ;
+                'b0111: led <= 'hA;
+                'b1011: led <= 'hB;
+                'b1101: led <= 'hC;
+                'b1110: led <= 'hD;
+                default: notpressed[3] <= 'b1;
                 endcase
+            end
             endcase
 endmodule
 `default_nettype wire

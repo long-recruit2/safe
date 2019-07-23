@@ -12,23 +12,28 @@ module safe #(
     output logic led6_b,
     output logic led5_b,
     output logic led5_r
-    // this does not work, why?
+    // this does not work, why? output should not have any default value?
     // output logic [3:0] led = 0
     );
 
     logic [3:0] key;
+    
+    logic all_not_pressed;
+    // logic all_not_pressed = 0; // this doesnt work
 
     keypad_decode #(CLK_FREQ, POLL_PERIOD) decode(
     .sysclk(sysclk),
     .row(row),
     .col(col),
     .led(key),
-    .led6_b(led6_b)
+    .all_not_pressed(all_not_pressed)
     );
     
-    logic prev_tmp;
+    assign led6_b = all_not_pressed;
+    
+    logic prev_all_not_pressed;
     always_ff @(posedge sysclk) begin
-        prev_tmp = led6_b;
+        prev_all_not_pressed = all_not_pressed;
     end
     
     logic [3:0] keys[2:0];
@@ -43,7 +48,7 @@ module safe #(
                 led5_r <= 'b1;
             end
         end
-        else if (prev_tmp == 'b0 && led6_b == 'b1) begin
+        else if (prev_all_not_pressed == 'b0 && all_not_pressed == 'b1) begin
             keys <= {keys[1:0], key};
             led5_b <= 'b0;
             led5_r <= 'b0;            
