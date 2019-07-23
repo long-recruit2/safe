@@ -8,7 +8,10 @@ module safe #(
     input wire sysclk,
     inout wire [3:0] row,
     (* fsm_encoding = "none" *) output logic [3:0] col,
-    output logic [3:0] led
+    output logic [3:0] led,
+    output logic led6_b,
+    output logic led5_b,
+    output logic led5_r
     // this does not work, why?
     // output logic [3:0] led = 0
     );
@@ -19,11 +22,37 @@ module safe #(
     .sysclk(sysclk),
     .row(row),
     .col(col),
-    .led(key)
+    .led(key),
+    .led6_b(led6_b)
     );
     
+    logic prev_tmp;
+    always_ff @(posedge sysclk) begin
+        prev_tmp = led6_b;
+    end
     
+    logic [3:0] keys[2:0];
+    always_ff @(posedge sysclk) begin
+        if (key == 'hA) begin
+            if(keys[2] == 'h1 && keys[1] == 'h2 && keys[0] == 'h3) begin
+                led5_b <= 'b1;
+                led5_r <= 'b0;
+            end
+            else begin
+                led5_b <= 'b0;
+                led5_r <= 'b1;
+            end
+        end
+        else if (prev_tmp == 'b0 && led6_b == 'b1) begin
+            keys <= {keys[1:0], key};
+            led5_b <= 'b0;
+            led5_r <= 'b0;            
+        end
+    end
+        
+     assign led = key == 'hA ? keys[2] : key;
     
+    /*
     // logic [$clog2(CLK_FREQ * 4)-1:0] four_sec = 0;
     localparam int TIMER = CLK_FREQ;
     logic [$clog2(TIMER)-1:0] four_sec = 0;
@@ -47,6 +76,6 @@ module safe #(
             key2 <= key;
     
     assign led = key2;
-    
+    */    
 endmodule
 `default_nettype wire
