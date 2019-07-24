@@ -60,6 +60,44 @@ module safe #(
         led = key == 'hA ? keys[2] : key;
     
     /*
+	output CS;
+    output SDIN;
+    output SCLK;
+    output DC;
+    output RES;
+    output VBAT;
+    output VDD;    
+    */
+    
+    localparam int M10_CLK = CLK_FREQ * 10 / 125;
+    logic [$clog2(M10_CLK)-1:0] m10counter = 0;
+    always_ff @(posedge sysclk)
+        if (m10counter == M10_CLK -1)
+            m10counter <= 0;
+        else
+            m10counter <= m10counter + 1;
+
+    logic m10clk = 0;
+    always_ff @(posedge sysclk) begin
+        if(m10counter == M10_CLK -1)
+            m10clk <= 'b1;
+        else if(m10counter == M10_CLK/2 -1)
+            m10clk <= 'b0;
+    end    
+    
+    PmodOLEDCtrl ctrl(
+        // .CLK(sysclk),
+        .CLK(m10clk),
+        .RST(),
+        .CS(jb[0]),
+        .SDIN(jb[1]),
+        .SCLK(jb[3]),
+        .DC(jb[4]),
+        .RES(jb[5]),
+        .VBAT(jb[6]),
+        .VDD(jb[7])
+    );
+    /*
     // logic [$clog2(CLK_FREQ * 4)-1:0] four_sec = 0;
     localparam int TIMER = CLK_FREQ;
     logic [$clog2(TIMER)-1:0] four_sec = 0;
