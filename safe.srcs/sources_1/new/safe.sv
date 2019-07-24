@@ -11,12 +11,12 @@ module safe #(
     output logic [3:0] led,
     output logic led6_b,
     output logic led5_b,
-    output logic led5_r
-    // this does not work, why? output should not have any default value?
-    // output logic [3:0] led = 0
+    output logic led5_r,
+    output logic [7:0] jb
     );
 
     logic [3:0] key;
+    // logic [3:0] key = 0; // this doesnt work, apparantly its wire
     
     logic all_not_pressed;
     // logic all_not_pressed = 0; // this doesnt work
@@ -29,11 +29,12 @@ module safe #(
     .all_not_pressed(all_not_pressed)
     );
     
-    assign led6_b = all_not_pressed;
+    always_comb
+        led6_b = all_not_pressed;
     
-    logic prev_all_not_pressed;
+    logic prev_all_not_pressed = 0;
     always_ff @(posedge sysclk) begin
-        prev_all_not_pressed = all_not_pressed;
+        prev_all_not_pressed <= all_not_pressed;
     end
     
     logic [3:0] keys[2:0];
@@ -54,8 +55,9 @@ module safe #(
             led5_r <= 'b0;            
         end
     end
-        
-     assign led = key == 'hA ? keys[2] : key;
+    
+    always_comb    
+        led = key == 'hA ? keys[2] : key;
     
     /*
     // logic [$clog2(CLK_FREQ * 4)-1:0] four_sec = 0;

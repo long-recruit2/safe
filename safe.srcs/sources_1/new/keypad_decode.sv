@@ -16,9 +16,8 @@ module keypad_decode #(
     
     logic [3:0] notpressed = 'h00;
 
-    // better technique?
-    assign all_not_pressed =
-        notpressed[0] & notpressed[1] & notpressed[2] & notpressed[3];    
+    always_comb
+        all_not_pressed = notpressed[0] & notpressed[1] & notpressed[2] & notpressed[3];    
 
     always_ff @(posedge sysclk)
         if (counter == CLK_DIV_COUNT - 1)
