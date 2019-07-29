@@ -6,13 +6,15 @@ module safe #(
     parameter POLL_PERIOD = 1e-3
 )(
     input wire sysclk,
-    inout wire [3:0] row,
-    (* fsm_encoding = "none" *) output logic [3:0] col,
+    input wire rst,
+    // input wire [3:0] row,
+    // (* fsm_encoding = "none" *) output logic [3:0] col,
     output logic [3:0] led,
     output logic led6_b,
     output logic led5_b,
     output logic led5_r,
-    output logic [7:0] jb
+    (* fsm_encoding = "none" *) output logic [7:0] je,
+    (* fsm_encoding = "none" *) output logic [7:0] jb
     );
 
     logic [3:0] key;
@@ -21,6 +23,7 @@ module safe #(
     logic all_not_pressed;
     // logic all_not_pressed = 0; // this doesnt work
 
+    /*
     keypad_decode #(CLK_FREQ, POLL_PERIOD) decode(
     .sysclk(sysclk),
     .row(row),
@@ -28,7 +31,8 @@ module safe #(
     .led(key),
     .all_not_pressed(all_not_pressed)
     );
-    
+    */
+
     always_comb
         led6_b = all_not_pressed;
     
@@ -59,36 +63,27 @@ module safe #(
     always_comb    
         led = key == 'hA ? keys[2] : key;
     
-    /*
-	output CS;
-    output SDIN;
-    output SCLK;
-    output DC;
-    output RES;
-    output VBAT;
-    output VDD;    
-    */
+    // localparam int M100_CLK = (CLK_FREQ / 125 * 100);
+    localparam int M100_CLK = 2;
+    logic m100clk = 0;
+    clkgen #(M100_CLK) clk(
+        .sysclk(sysclk), 
+        .clk(m100clk)
+    );
     
-    localparam int M10_CLK = CLK_FREQ * 10 / 125;
-    logic [$clog2(M10_CLK)-1:0] m10counter = 0;
-    always_ff @(posedge sysclk)
-        if (m10counter == M10_CLK -1)
-            m10counter <= 0;
-        else
-            m10counter <= m10counter + 1;
-
-    logic m10clk = 0;
-    always_ff @(posedge sysclk) begin
-        if(m10counter == M10_CLK -1)
-            m10clk <= 'b1;
-        else if(m10counter == M10_CLK/2 -1)
-            m10clk <= 'b0;
-    end    
-    
+    logic rst = 'b0;
     PmodOLEDCtrl ctrl(
         // .CLK(sysclk),
-        .CLK(m10clk),
-        .RST(),
+        .CLK(m100clk),
+        .RST(rst),
+        .CS(je[0]),
+        .SDIN(je[1]),
+        .SCLK(je[3]),
+        .DC(je[4]),
+        .RES(je[5]),
+        .VBAT(je[6]),
+        .VDD(je[7])
+        /*
         .CS(jb[0]),
         .SDIN(jb[1]),
         .SCLK(jb[3]),
@@ -96,6 +91,7 @@ module safe #(
         .RES(jb[5]),
         .VBAT(jb[6]),
         .VDD(jb[7])
+        */
     );
     /*
     // logic [$clog2(CLK_FREQ * 4)-1:0] four_sec = 0;
