@@ -1,0 +1,146 @@
+OledInitialize
+※Transition1
+　・Transition1
+　　temp_spi_en <= 1'b1;
+　・Transition2
+　　待ち
+　・Transition5
+　　temp_spi_en <= 1'b0;
+　　temp_delay_en <= 1'b0;
+　→spi待ち
+
+※Transition3
+・Transition3
+　temp_delay_en <= 1'b1;
+・Transition4
+　待ち
+・Transition5
+　temp_spi_en <= 1'b0;
+　temp_delay_en <= 1'b0;
+　→delay待ち
+
+・Idle
+　temp_dc <= 1'b0;
+
+・VddOn
+　temp_vdd <= 1'b0;
+・Wait1
+・delay待ち
+
+・DispOff
+　temp_spi_data <= 8'hAE; // 0xAE
+・spi待ち
+
+・ResetOn
+　temp_res <= 1'b0;
+・Wait2
+・delay待ち
+
+・ResetOff
+　temp_res <= 1'b1;
+・delay待ち
+
+・ChargePump1
+　temp_spi_data <= 8'h8D; //0x8D
+・spi待ち
+
+・ChargePump2
+　temp_spi_data <= 8'h14; // 0x14
+・spi待ち
+
+・PreCharge1
+　temp_spi_data <= 8'hD9; // 0xD9
+・spi待ち
+
+・PreCharge2
+　temp_spi_data <= 8'hF1; // 0xF1
+・spi待ち
+
+・VbatOn
+　temp_vbat <= 1'b0;
+・Wait3
+・delay待ち
+
+・DispContrast1
+　temp_spi_data <= 8'h81; // 0x81
+・spi待ち
+
+・DispContrast2
+　temp_spi_data <= 8'h0F; // 0x0F
+・spi待ち
+
+・InvertDisp1
+　temp_spi_data <= 8'hA1; // 0xA1
+・spi待ち
+
+・InvertDisp2
+　temp_spi_data <= 8'hC8; // 0xC8
+・spi待ち
+
+・ComConfig1
+　temp_spi_data <= 8'hDA; // 0xDA
+・spi待ち
+
+・ComConfig2
+　temp_spi_data <= 8'h20; // 0x20
+・spi待ち
+
+・DispOn
+　temp_spi_data <= 8'hAF; // 0xAF
+・spi待ち
+
+・Done
+　temp_fin <= 1'b1;
+
+OledExample
+
+・Idle
+　temp_page <= 2'b00;
+
+・ClearDC
+　temp_dc <= 1'b0;
+
+・SetPage
+　temp_spi_data <= 8'b00100010;
+・spi待ち
+
+・PageNum
+　temp_spi_data <= {6'b000000,temp_page};
+・spi待ち
+
+・LeftColumn1
+　temp_spi_data <= 8'b00000000;
+・spi待ち
+
+・LeftColumn2
+　temp_spi_data <= 8'b00010000;
+・spi待ち
+
+・SetDC
+　temp_dc <= 1'b1;
+
+・Alphabet
+　current_screenを更新
+
+・UpdateScreen
+　この中で
+　after_page_state <= after_update_state;
+　を設定している
+
+・Wait1
+　temp_delay_ms <= 12'b111110100000; //4000
+・delay待ち
+
+・ClearScreen
+
+・UpdateScreen
+
+・Wait2
+　temp_delay_ms <= 12'b001111101000; //1000
+・delay待ち
+
+・DigilentScreen
+
+・UpdateScreen
+
+・Done
