@@ -92,7 +92,7 @@ OledInitialize
 ・Done
 　temp_fin <= 1'b1;
 
-OledExample
+------------------------------------------ OledExample ------------------------------------------
 
 ・Idle
 　temp_page <= 2'b00;
