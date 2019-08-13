@@ -62,7 +62,8 @@ module safe #(
     
     always_comb    
         led = key == 'hA ? keys[2] : key;
-    
+
+    /*    
     // localparam int M100_CLK = (CLK_FREQ / 125 * 100);
     localparam int M100_CLK = 2;
     logic m100clk = 0;
@@ -84,6 +85,7 @@ module safe #(
         .VBAT(jb[6]),
         .VDD(jb[7])
     );
+    */
 
     // localparam int M100_CLK = (CLK_FREQ / 125 * 100);
     localparam int M100_RGB_CLK = 2;

@@ -357,13 +357,11 @@ void Oledrgb::OledrgbDevInit()
 {
 	/* Bring PmodEn HIGH*/
 	digitalWrite(PmodEn, HIGH);
-//	delay(10);
 	delay(DELAY_TIME_MS);
 	digitalWrite(Reset, LOW); //Set Reset LOW
-//	delay(100);
-	delay(DELAY_TIME_MS);
-	
+	delay(DELAY_TIME_MS);	
 	digitalWrite(Reset, HIGH); //Set Reset HIGH	
+
 	/* command un-lock*/
 	WriteSPI(0xFD);
     WriteSPI(0x12); 

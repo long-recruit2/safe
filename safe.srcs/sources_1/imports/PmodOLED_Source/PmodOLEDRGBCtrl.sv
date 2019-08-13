@@ -88,7 +88,6 @@ module PmodOLEDRGBCtrl(
 			.FIN(example_done)
 	);
 
-
 	//MUXes to indicate which outputs are routed out depending on which block is enabled
 	assign CS = (current_state == "OledInitialize") ? init_cs : example_cs;
 	assign SDIN = (current_state == "OledInitialize") ? init_sdo : example_sdo;
