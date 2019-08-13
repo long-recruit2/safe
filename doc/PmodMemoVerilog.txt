@@ -1,0 +1,435 @@
+OledInitialize
+※Transition1
+　・Transition1
+　　temp_spi_en <= 1'b1;
+　・Transition2
+　　待ち
+　・Transition5
+　　temp_spi_en <= 1'b0;
+　　temp_delay_en <= 1'b0;
+　→spi待ち
+
+※Transition3
+・Transition3
+　temp_delay_en <= 1'b1;
+・Transition4
+　待ち
+・Transition5
+　temp_spi_en <= 1'b0;
+　temp_delay_en <= 1'b0;
+　→delay待ち
+
+・Idle
+　temp_dc <= 1'b0;
+
+・VddOn
+　temp_vdd <= 1'b0;
+・Wait1
+・delay待ち
+
+・DispOff
+　temp_spi_data <= 8'hAE; // 0xAE
+・spi待ち
+
+・ResetOn
+　temp_res <= 1'b0;
+・Wait2
+・delay待ち
+
+・ResetOff
+　temp_res <= 1'b1;
+・delay待ち
+
+・ChargePump1
+　temp_spi_data <= 8'h8D; //0x8D
+・spi待ち
+
+・ChargePump2
+　temp_spi_data <= 8'h14; // 0x14
+・spi待ち
+
+・PreCharge1
+　temp_spi_data <= 8'hD9; // 0xD9
+・spi待ち
+
+・PreCharge2
+　temp_spi_data <= 8'hF1; // 0xF1
+・spi待ち
+
+・VbatOn
+　temp_vbat <= 1'b0;
+・Wait3
+・delay待ち
+
+・DispContrast1
+　temp_spi_data <= 8'h81; // 0x81
+・spi待ち
+
+・DispContrast2
+　temp_spi_data <= 8'h0F; // 0x0F
+・spi待ち
+
+・InvertDisp1
+　temp_spi_data <= 8'hA1; // 0xA1
+・spi待ち
+
+・InvertDisp2
+　temp_spi_data <= 8'hC8; // 0xC8
+・spi待ち
+
+・ComConfig1
+　temp_spi_data <= 8'hDA; // 0xDA
+・spi待ち
+
+・ComConfig2
+　temp_spi_data <= 8'h20; // 0x20
+・spi待ち
+
+・DispOn
+　temp_spi_data <= 8'hAF; // 0xAF
+・spi待ち
+
+・Done
+　temp_fin <= 1'b1;
+
+------------------------------------------ OledExample ------------------------------------------
+
+・Idle
+　temp_page <= 2'b00;
+
+・ClearDC
+　temp_dc <= 1'b0;
+
+・SetPage
+　temp_spi_data <= 8'b00100010;
+・spi待ち
+
+・PageNum
+　temp_spi_data <= {6'b000000,temp_page};
+・spi待ち
+
+・LeftColumn1
+　temp_spi_data <= 8'b00000000;
+・spi待ち
+
+・LeftColumn2
+　temp_spi_data <= 8'b00010000;
+・spi待ち
+
+・SetDC
+　temp_dc <= 1'b1;
+
+・Alphabet
+　current_screenを更新
+
+・UpdateScreen
+　この中で
+　after_page_state <= after_update_state;
+　を設定している
+
+・Wait1
+　temp_delay_ms <= 12'b111110100000; //4000
+・delay待ち
+
+・ClearScreen
+
+・UpdateScreen
+
+・Wait2
+　temp_delay_ms <= 12'b001111101000; //1000
+・delay待ち
+
+・DigilentScreen
+
+・UpdateScreen
+
+・Done
+
+OLED ===============================================================================
+
+void
+OledDevInit()
+	{
+
+	/* We're going to be sending commands, so clear the Data/Cmd bit
+	*/
+	digitalWrite(DataCmd, LOW);
+
+	/* Start by turning VDD on and wait a while for the power to come up.
+	*/
+	digitalWrite(VddCtrl, LOW);
+	delay(1);
+
+	/* Display off command
+	*/
+	Spi2PutByte(cmdOledDisplayOff);                       #define	cmdOledDisplayOff	0xAE
+
+	/* Bring Reset low and then high
+	*/
+	digitalWrite(Reset, LOW);
+	delay(1);
+	digitalWrite(Reset, HIGH);
+
+	/* Send the Set Charge Pump and Set Pre-Charge Period commands
+	*/
+	Spi2PutByte(0x8D);		//From Univision data sheet, not in SSD1306 data sheet
+	Spi2PutByte(0x14);
+
+	Spi2PutByte(0xD9);		//From Univision data sheet, not in SSD1306 data sheet
+	Spi2PutByte(0xF1);
+
+	/* Turn on VCC and wait 100ms
+	*/
+	digitalWrite(VbatCtrl, LOW);
+	delay(100);
+
+	/* Send the commands to invert the display.
+	*/
+	Spi2PutByte(cmdOledSegRemap);		//remap columns  #define	cmdOledSegRemap		0xA1
+	Spi2PutByte(cmdOledComDir);			//remap the rows #define	cmdOledComDir		0xC8
+
+	/* Send the commands to select sequential COM configuration
+	*/
+	Spi2PutByte(cmdOledComConfig);		//set COM configuration command #define	cmdOledComConfig	0xDA
+	Spi2PutByte(0x20);					//sequential COM, left/right remap enabled
+
+	/* Send Display On command
+	*/
+	Spi2PutByte(cmdOledDisplayOn);                                      #define	cmdOledDisplayOn	0xAF
+
+}
+
+
+void
+OledUpdate()
+	{
+	int		ipag;
+	int		icol;
+	uint8_t *	pb;
+
+	pb = rgbOledBmp;
+
+	for (ipag = 0; ipag < cpagOledMax; ipag++) {
+
+		digitalWrite(DataCmd, LOW);
+
+		/* Set the page address
+		*/
+		Spi2PutByte(0x22);		//Set page command
+		Spi2PutByte(ipag);		//page number
+
+		/* Start at the left column
+		*/
+		Spi2PutByte(0x00);		//set low nybble of column
+		Spi2PutByte(0x10);		//set high nybble of column
+
+		digitalWrite(DataCmd, HIGH);
+
+		/* Copy this memory page of display data.
+		*/
+		OledPutBuffer(ccolOledMax, pb);
+		pb += ccolOledMax;
+
+	}
+
+}
+
+OLEDRGB ============================================================================
+
+const alt_u8 pmod_oledrgb_init_cmd[] =
+{
+    0xa0, 0b00110010,
+    0xa1, 0x00,
+    0xa2, 0x00,
+    0xa4,
+    0xa8, 63,
+    0xad, 0b10001110,
+    0xb0, 0x1a,
+    0xb1, 0x74,
+    0xb3, 0xf0,
+    0x8a, 0x81,
+    0x8b, 0x82,
+    0x8c, 0x83,
+    0xbb, 0x3a,
+    0xbe, 0x3e,
+    0x87, 0x06,
+    0x15, 0x00, 95,
+    0x75, 0, 63,
+    0x81, 0xff,
+    0x82, 0xff,
+    0x83, 0xff,
+};
+
+void pmod_oledrgb_init(void)
+{
+    int i;
+    pmod_oledrgb_cntrl_update();
+    pmod_oledrgb_ds(0); // command mode
+    pmod_oledrgb_reset(1);
+    pmod_oledrgb_vccen(0);
+    pmod_oledrgb_pmoden(1);
+    usleep(20000); // wait for 20msec
+    pmod_oledrgb_reset(0);
+    usleep(3);
+    pmod_oledrgb_reset(1);
+    usleep(100);
+    for (i=0; i<41; i++)
+        pmod_oledrgb_cmd(pmod_oledrgb_init_cmd[i]);
+
+    pmod_oledrgb_vccen(1);
+    usleep(25000); // wait for 25msec
+    pmod_oledrgb_cmd(0xaf);
+    usleep(125000); // wait for 125msec
+};
+
+void pmod_oledrgb_dat(alt_u8 a)
+{
+    pmod_oledrgb_ds(1);     // data mode
+    pmod_oledrgb_spi_tx(a);
+}
+
+void pmod_oledrgb_clrscr(void)
+{
+    int x, y;
+    for (x=0; x<96; x++)
+        for (y=0; y<64; y++)
+            pmod_oledrgb_dat(0);
+}
+
+//pmod_oledrgb_buff
+void pmod_oledrgb_str_print(alt_u8 x, alt_u8 y, alt_u8 *str, alt_u8 cl)
+{
+    alt_u8 c;
+    int i, len;
+    int k, l, p;
+    alt_u8 buf[8][8];
+    int pos_x, pos_y;
+    len = strlen(str);
+    for (i=0; i<len; i++) {
+        c = *(str+i);
+        font_write(c, cl, buf);
+        pos_x = x+(8*i);
+        pos_y = y*96*8;
+        for (k=0; k<8; k++) { // y
+            printf("\n");
+            for (l=0; l<8; l++) { // x
+                pmod_oledrgb_buff[pos_x+l+pos_y+(k*96)] = buf[k][l];
+            }
+        }
+    }
+}
+
+void pmod_oledrgb_update_bf1(void)
+{
+    int l;
+    for(l=0; l<PMOD_OLEDRGB_BUFF_SIZE; l++)
+        pmod_oledrgb_dat(pmod_oledrgb_buff[l]);
+}
+
+OLEDRGB2 ===========================================================================
+
+void Oledrgb::OledrgbHostInit()
+	{
+	pdspi = new DSPI0();
+	m_SSPin = PIN_DSPI0_SS;	// default SS pin for SPI0
+
+	pdspi->begin(m_SSPin);	// this defines SS pin as output, sets SS high
+	pdspi->setMode(DSPI_MODE3);
+	pdspi->setSpeed(25000000);
+	
+	pinMode(DataCmd, OUTPUT);
+	pinMode(Reset, OUTPUT);
+	pinMode(VCCEn, OUTPUT);
+	pinMode(PmodEn, OUTPUT);
+	
+	
+	digitalWrite(DataCmd, LOW);
+	digitalWrite(Reset, HIGH);
+	digitalWrite(VCCEn, LOW);
+	digitalWrite(PmodEn, HIGH);
+	
+	pdspi->setSelect(HIGH);
+
+}
+
+#define DELAY_TIME_MS	1000
+void Oledrgb::OledrgbDevInit()
+{
+	/* Bring PmodEn HIGH*/
+	digitalWrite(PmodEn, HIGH);
+//	delay(10);
+	delay(DELAY_TIME_MS);
+	digitalWrite(Reset, LOW); //Set Reset LOW
+//	delay(100);
+	delay(DELAY_TIME_MS);
+	
+	digitalWrite(Reset, HIGH); //Set Reset HIGH	
+	/* command un-lock*/
+	WriteSPI(0xFD);
+    WriteSPI(0x12); 
+
+	/* 5. Univision Initialization Steps*/
+
+	// 5a) Set Display Off
+	WriteSPI(CMD_DISPLAYOFF);                         #define CMD_DISPLAYOFF                     	0xAE
+    // 5b) Set Remap and Data Format
+	WriteSPI(CMD_SETREMAP, 0x72);                     #define CMD_SETREMAP                       	0xA0
+	// 5c) Set Display Start Line
+	WriteSPI(CMD_SETDISPLAYSTARTLINE, 0x00); //start line is set at upper left corner #define CMD_SETDISPLAYSTARTLINE          	0xA1
+	// 5d) Set Display Offset
+	WriteSPI(CMD_SETDISPLAYOFFSET, 0x00); //no offset #define CMD_SETDISPLAYOFFSET              	0xA2
+    // 5e)
+    WriteSPI(CMD_NORMALDISPLAY);                      #define CMD_NORMALDISPLAY                  	0xA4
+	// 5f) Set Multiplex Ratio
+	WriteSPI(CMD_SETMULTIPLEXRATIO, 0x3F); //64MUX    #define CMD_SETMULTIPLEXRATIO             	0xA8
+    // 5g)Set Master Configuration
+    WriteSPI(CMD_SETMASTERCONFIGURE, 0x8E);           #define CMD_SETMASTERCONFIGURE            	0xAD
+    // 5h)Set Power Saving Mode
+    WriteSPI(CMD_POWERSAVEMODE, 0x0B);                #define CMD_POWERSAVEMODE                 	0xB0
+	// 5i) Set Phase Length
+	WriteSPI(CMD_PHASEPERIODADJUSTMENT, 0x31); //phase 2 = 14 DCLKs, phase 1 = 15 DCLKS            #define CMD_PHASEPERIODADJUSTMENT         	0xB1
+	// 5j) Send Clock Divide Ratio and Oscillator Frequency
+	WriteSPI(CMD_DISPLAYCLOCKDIV, 0xF0); //mid high oscillator frequency, DCLK = FpbCllk/2         #define CMD_DISPLAYCLOCKDIV               	0xB3
+	// 5k) Set Second Pre-charge Speed of Color A
+	WriteSPI(CMD_SETPRECHARGESPEEDA, 0x64); //Set Second Pre-change Speed For ColorA               #define CMD_SETPRECHARGESPEEDA           	0x8A
+	// 5l) Set Set Second Pre-charge Speed of Color B
+	WriteSPI(CMD_SETPRECHARGESPEEDB, 0x78); //Set Second Pre-change Speed For ColorB               #define CMD_SETPRECHARGESPEEDB           	0x8B
+	// 5m) Set Second Pre-charge Speed of Color C
+	WriteSPI(CMD_SETPRECHARGESPEEDC, 0x64); //Set Second Pre-change Speed For ColorC               #define CMD_SETPRECHARGESPEEDC           	0x8C
+	// 5n) Set Pre-Charge Voltage
+	WriteSPI(CMD_SETPRECHARGEVOLTAGE, 0x3A); // Pre-charge voltage =...Vcc                         #define CMD_SETPRECHARGEVOLTAGE           	0xBB
+	// 50) Set VCOMH Deselect Level
+	WriteSPI(CMD_SETVVOLTAGE, 0x3E); // Vcomh = ...*Vcc                                            #define CMD_SETVVOLTAGE                   	0xBE
+	// 5p) Set Master Current
+	WriteSPI(CMD_MASTERCURRENTCONTROL, 0x06);                                                      #define CMD_MASTERCURRENTCONTROL          	0x87
+	// 5q) Set Contrast for Color A
+	WriteSPI(CMD_SETCONTRASTA, 0x91); //Set contrast for color A                                   #define CMD_SETCONTRASTA                  	0x81
+	// 5r) Set Contrast for Color B
+	WriteSPI(CMD_SETCONTRASTB, 0x50); //Set contrast for color B                                   #define CMD_SETCONTRASTB                  	0x82
+	// 5s) Set Contrast for Color C
+	WriteSPI(CMD_SETCONTRASTC, 0x7D); //Set contrast for color C                                   #define CMD_SETCONTRASTC                  	0x83
+	WriteSPI(CMD_DEACTIVESCROLLING);   //disable scrolling                                         #define CMD_DEACTIVESCROLLING                0x2E
+    // 5t) Set display ON
+	// 5u) Clear Screen
+	Clear();
+
+	/* Turn on VCC and wait 100ms*/
+	digitalWrite(VCCEn, HIGH);
+	delay(DELAY_TIME_MS);
+
+	/* Send Display On command*/
+	WriteSPI(CMD_DISPLAYON);                                                                       #define CMD_DISPLAYON    					0xAF
+
+	delay(300);
+}
+
+void Oledrgb::Clear()
+{
+	cmds[0] = CMD_CLEARWINDOW; 		// Enter the “clear mode”                                   #define CMD_CLEARWINDOW                    0x25
+	cmds[1] = 0x00;					// Set the starting column coordinates
+	cmds[2] = 0x00;					// Set the starting row coordinates
+	cmds[3] = OLEDRGB_WIDTH - 1;	// Set the finishing column coordinates;                      #define OLEDRGB_WIDTH                      96
+	cmds[4] = OLEDRGB_HEIGHT - 1;	// Set the finishing row coordinates;                         #define OLEDRGB_HEIGHT                     64
+	WriteSPI(cmds, 5, NULL);
+	delay(5);
+}
