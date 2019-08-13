@@ -51,7 +51,7 @@ module OledRGBEX(
    parameter [7:0]  alphabet_screen[0:2][0:15] = '{
    '{8'hfd, 8'h12, 8'hae, 8'ha0, 8'h72, 8'ha1, 8'h00, 8'ha2, 8'h00, 8'ha4, 8'ha8, 8'h3f, 8'had, 8'h8e, 8'hb0, 8'h0b},
    '{8'hb1, 8'h31, 8'hb3, 8'hf0, 8'h8a, 8'h64, 8'h8b, 8'h78, 8'h8c, 8'h64, 8'hbb, 8'h3a, 8'hbe, 8'h3e, 8'h87, 8'h06},
-   '{8'h81, 8'h91, 8'h82, 8'h50, 8'h83, 8'h7d, 8'h2e, 8'h25, 8'h00, 8'h00, 8'h95, 8'h63, 8'haf, 8'h00, 8'h00, 8'h00}}; 
+   '{8'h81, 8'h91, 8'h82, 8'h50, 8'h83, 8'h7d, 8'h25, 8'h00, 8'h00, 8'h5f, 8'h3f, 8'haf, 8'h00, 8'h00, 8'h00, 8'h00}}; 
 
    //Constant that fills the screen with blank (spaces) entries
    parameter [7:0]  clear_screen[0:3][0:15] = '{'{8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20}, '{8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20}, '{8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20}, '{8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20, 8'h20}};
@@ -161,7 +161,8 @@ module OledRGBEX(
 			// Wait 4ms and go to ClearScreen
 			"Wait1" : begin
 					temp_delay_ms <= 12'b111110100000; //4000
-					after_state <= "ClearScreen";
+					// after_state <= "ClearScreen";
+					after_state <= "Done";
 					current_state <= "Transition3"; // Transition3 = The delay transition states
 			end
 			
