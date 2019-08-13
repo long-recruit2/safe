@@ -70,20 +70,12 @@ module safe #(
         .sysclk(sysclk), 
         .clk(m100clk)
     );
-    
+
     logic rst = 'b0;
     PmodOLEDCtrl ctrl(
         // .CLK(sysclk),
         .CLK(m100clk),
         .RST(rst),
-        .CS(je[0]),
-        .SDIN(je[1]),
-        .SCLK(je[3]),
-        .DC(je[4]),
-        .RES(je[5]),
-        .VBAT(je[6]),
-        .VDD(je[7])
-        /*
         .CS(jb[0]),
         .SDIN(jb[1]),
         .SCLK(jb[3]),
@@ -91,7 +83,28 @@ module safe #(
         .RES(jb[5]),
         .VBAT(jb[6]),
         .VDD(jb[7])
-        */
+    );
+
+    // localparam int M100_CLK = (CLK_FREQ / 125 * 100);
+    localparam int M100_RGB_CLK = 2;
+    logic m100rgbclk = 0;
+    clkgen #(M100_RGB_CLK) clkrgb(
+        .sysclk(sysclk), 
+        .clk(m100rgbclk)
+    );
+    
+    logic rstrgb = 'b0;
+    PmodOLEDRGBCtrl ctrlrgb(
+        // .CLK(sysclk),
+        .CLK(m100rgbclk),
+        .RST(rstrgb),
+        .CS(je[0]),
+        .SDIN(je[1]),
+        .SCLK(je[3]),
+        .DC(je[4]),
+        .RES(je[5]),
+        .VBAT(je[6]),
+        .VDD(je[7])
     );
     /*
     // logic [$clog2(CLK_FREQ * 4)-1:0] four_sec = 0;
